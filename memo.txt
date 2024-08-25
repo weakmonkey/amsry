@@ -1,0 +1,205 @@
+### Docker環境の構築手順
+
+以下の手順で、Rails 7、Ruby 3、PostgreSQL、pgAdmin 4、Nginxを含む開発環境をDocker上に構築できます。
+
+#### 1. ディレクトリ構成
+まず、プロジェクトディレクトリを作成し、以下のような構成にします。
+
+```
+myapp/
+├── Dockerfile
+├── docker-compose.yml
+├── nginx.conf
+└── src/
+    └── myapp/
+```
+
+#### 2. Dockerfileの作成
+`myapp/Dockerfile`を以下の内容で作成します。
+
+```dockerfile
+FROM ruby:3.3.4
+
+RUN apt-get update -qq && apt-get install -y nodejs postgresql-client
+
+WORKDIR /myapp
+COPY src/myapp/Gemfile /myapp/Gemfile
+COPY src/myapp/Gemfile.lock /myapp/Gemfile.lock
+RUN bundle install
+
+COPY src/myapp /myapp
+
+# 変更箇所: 必要なgemをインストールするために、Gemfile.lockを更新
+RUN bundle update
+```
+
+#### 3. docker-compose.ymlの作成
+`myapp/docker-compose.yml`を以下の内容で作成します。
+
+version: '3'
+services:
+  db:
+    image: postgres:16
+    container_name: postgres16_rails
+    volumes:
+      - postgres16:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: password
+  web:
+    container_name: web_rails
+    build: .
+    command: bash -c "rm -f tmp/pids/server.pid && bundle install && bundle update && bundle exec rails s -b '0.0.0.0'"  # 変更箇所
+    volumes:
+      - .:/myapp
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4_rails
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+  nginx:
+    image: nginx
+    container_name: nginx_rails
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - web
+
+volumes:
+  postgres16:
+  pgadmin:
+
+
+#### 4. nginx.confの作成
+`myapp/nginx.conf`を以下の内容で作成します。
+
+```nginx
+events {}
+
+http {
+    server {
+        listen 80;
+        server_name localhost;
+
+        location / {
+            proxy_pass http://web:3000;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    }
+}
+```
+
+#### 5. 構築用コマンド＋データベースの作成用コマンド
+データベースが見つからない場合、以下のコマンドでデータベースを作成します。
+
+docker compose run web rails new . --force --database=postgresql --css tailwind
+docker compose build
+docker compose up -d
+docker compose run web bin/rails db:create  #-->なぜDocker.lockがないとエラーが出る　謎
+
+### 環境完成後のディレクトリ構成図
+```
+myapp/
+├── Dockerfile
+├── docker-compose.yml
+├── nginx.conf
+├── src/
+│   └── myapp/
+│       ├── Gemfile
+│       ├── Gemfile.lock
+│       ├── app/
+│       ├── bin/
+│       ├── config/
+│       │   └── database.yml
+│       ├── db/
+│       ├── lib/
+│       ├── log/
+│       ├── public/
+│       ├── storage/
+│       ├── test/
+│       ├── tmp/
+│       └── vendor/
+└── volumes/
+    └── postgres_data/
+```
+
+
+`docker-compose.yml`ファイルの内容を書き換えた後、以下の手順を実行してください：
+
+1. **現在のコンテナを停止する**:
+   ```bash
+   docker compose down
+   ```
+
+2. **新しい設定でコンテナを再起動する**:
+   ```bash
+   docker compose up -d
+   ```
+
+
+Gemfileを更新後の対応
+
+1. **再度インストール**:
+    ```bash
+    docker compose run web bundle install
+    ```
+
+2. **コンテナの再構築**:
+    ```bash
+    docker compose build
+    ```
+
+3. **コンテナの起動**:
+    ```bash
+    docker compose up -d
+    ```
+
+どうしてもダメな場合のみ1~7を行う
+
+1. **コンテナの停止と削除**:
+    ```bash
+    docker-compose down
+    ```
+
+2. **キャッシュのクリア**:
+    ```bash
+    docker compose run web bundle clean --force
+    ```
+
+3. **Gemfile.lockの削除**:
+    ```bash
+    rm Gemfile.lock
+    ```
+
+4. **再度インストール**:
+    ```bash
+    docker compose run web bundle install
+    ```
+
+5. **コンテナの再構築**:
+    ```bash
+    docker compose build
+    ```
+
+6. **データベースの作成**:
+    ```bash
+    docker compose run web rails db:create
+    ```
+
+7. **コンテナの起動**:
+    ```bash
+    docker compose up -d
+    ```

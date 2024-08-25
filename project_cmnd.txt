@@ -1,0 +1,18 @@
+migration
+docker compose exec web rails g migration CreateOrders name:string
+
+migrate
+docker compose exec web rails db:migrate
+
+model作成(skip migration)
+docker compose exec web rails g model Order --skip-migration
+
+routes add
+docker compose exec web rails routes | grep orders
+
+controller generate(skip routes)
+docker compose exec web rails routes | grep orders
+
+Gemfileを更新
+docker compose run web bundle install
+docker-compose up --build
