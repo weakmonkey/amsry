@@ -7,6 +7,7 @@ services:
       - postgres16:/var/lib/postgresql/data
     environment:
       POSTGRES_PASSWORD: password
+      TZ: Asia/Tokyo
   web:
     container_name: web_rails
     build: .

@@ -1,0 +1,26 @@
+<div class='container pt-0 pb-10'>
+  <h1 class='text-5xl mb-5 text-center'>注文の確認</h1>
+
+  <div class='pb-5'>
+    <p>以下の内容でよろしいでしょうか？</p>
+    <div class='pt-5'>
+      <div class='block text-gray-700 text-sm font-bold mb-2 border-l-4 border-blue-700 pl-2'>
+        <%= t('activerecord.attributes.order.name') %>
+      </div>
+      <div>
+        <%= @order.name %>
+      </div>
+    </div>
+  </div>
+
+  <%= form_for @order, url: orders_path do |f| %>
+    <%= f.hidden_field :name %>
+    <div>
+      <%= f.button 'OK', class: 'bg-blue-800 hover:bg-blue-700 text-white rounded px-4 py-2 w-full' %>
+    </div>
+    <div class='mt-2'>
+      <%= f.button '戻る', value: 'back', class: 'bg-red-800 hover:bg-blue-700 text-white rounded px-4 py-2 w-full' %>
+    </div>
+
+  <% end %>
+</div>

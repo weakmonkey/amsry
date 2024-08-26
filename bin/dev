@@ -14,3 +14,9 @@ export RUBY_DEBUG_OPEN="true"
 export RUBY_DEBUG_LAZY="true"
 
 exec foreman start -f Procfile.dev "$@"
+
+#!/bin/sh
+if [ -f tmp/pids/server.pid ]; then
+  rm tmp/pids/server.pid
+fi
+bin/rails tailwindcss:watch

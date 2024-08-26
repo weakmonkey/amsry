@@ -7,7 +7,7 @@ docker compose exec web rails db:migrate
 model作成(skip migration)
 docker compose exec web rails g model Order --skip-migration
 
-routes add
+routes 確認
 docker compose exec web rails routes | grep orders
 
 controller generate(skip routes)
@@ -16,3 +16,12 @@ docker compose exec web rails routes | grep orders
 Gemfileを更新
 docker compose run web bundle install
 docker-compose up --build
+
+tailwindcss 更新後
+docker compose exec web rails assets:precompile
+
+docker-compose.yml 更新後
+docker compose down
+docker compose build
+docker compose up -d
+

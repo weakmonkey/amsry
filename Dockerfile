@@ -1,5 +1,7 @@
 FROM ruby:3.3.4
 
+ENV TZ=Asia/Tokyo
+
 RUN apt-get update -qq && apt-get install -y nodejs postgresql-client
 
 WORKDIR /myapp
