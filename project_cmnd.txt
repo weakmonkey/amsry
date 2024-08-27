@@ -1,8 +1,10 @@
 migration
 docker compose exec web rails g migration CreateOrders name:string
+docker compose exec web rails g migration AddEmailToOrders email:string
 
 migrate
 docker compose exec web rails db:migrate
+docker compose exec web rails db:rollback
 
 model作成(skip migration)
 docker compose exec web rails g model Order --skip-migration
